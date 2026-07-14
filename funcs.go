@@ -21,12 +21,14 @@ func MakeBytesFunc() function.Function {
 		Params: []function.Parameter{
 			{Name: "value", Type: cty.DynamicPseudoType, Description: "UTF-8 string or bytes value"},
 		},
+		// The variadic is how cty fakes an *optional* content type — the only way it
+		// offers. See boundedArity for why the ceiling has to be declared separately.
 		VarParam: &function.Parameter{
 			Name:        "content_type",
 			Type:        cty.String,
-			Description: "Optional MIME/content type",
+			Description: "Optional MIME/content type (at most one)",
 		},
-		Type: function.StaticReturnType(BytesObjectType),
+		Type: boundedArity("bytes", 2, BytesObjectType),
 		Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 			val := args[0]
 			var data []byte
@@ -93,16 +95,23 @@ func MakeBase64DecodeFunc() function.Function {
 		Params: []function.Parameter{
 			{Name: "str", Type: cty.String, Description: "Base64-encoded string to decode"},
 		},
+		// The variadic is how cty fakes an *optional* content type — the only way it
+		// offers. Here it hides more than a name: whether it is present decides the
+		// return type, which is why the Type func below is the real signature.
 		VarParam: &function.Parameter{
 			Name:        "content_type",
 			Type:        cty.String,
-			Description: "If provided, returns a bytes object with this content type (use \"\" for untyped bytes)",
+			Description: "If provided (at most once), returns a bytes object with this content type (use \"\" for untyped bytes)",
 		},
 		Type: func(args []cty.Value) (cty.Type, error) {
-			if len(args) > 1 {
+			switch len(args) {
+			case 1:
+				return cty.String, nil
+			case 2:
 				return BytesObjectType, nil
+			default:
+				return cty.NilType, fmt.Errorf("base64decode() takes at most 2 arguments, got %d", len(args))
 			}
-			return cty.String, nil
 		},
 		Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 			data, err := base64.StdEncoding.DecodeString(args[0].AsString())

@@ -1,0 +1,44 @@
+//functy:extern
+
+// The bytes functions, provided in Go by bytes-cty-type (GetBytesFunctions). This
+// file declares their signatures only — it is never compiled, and nothing here is
+// callable.
+//
+// It exists because cty cannot express what any of the three really accept. Each takes
+// an argument that is a *union* — a string, or a bytes value — and cty has no union
+// type, so its metadata can only say "dynamic", which says nothing at all. Two of them
+// go further: bytes() and base64decode() each take one optional trailing argument, and
+// the only way cty offers to make an argument optional is a variadic — which erases
+// its name, its type, its arity, and, for base64decode, whose *return type* changes
+// when it is present, its consequence. Reflected from cty alone, base64decode reads as
+// `base64decode(str, ...content_type)` and could be doing anything.
+//
+// Each union is declared below as one form per arm.
+//
+// None of these names are namespaced, and that is deliberate. base64encode and
+// base64decode deliberately shadow the HCL builtins of the same name, extending them
+// rather than replacing them — one-argument base64decode still returns a string, so
+// existing config keeps working — and a namespace would forfeit exactly that. bytes()
+// constructs the `bytes` type and reads as a cast, like tostring(x).
+
+// Bytes: raw binary data carrying an optional content type.
+//
+// From a string, the data is its UTF-8 encoding. From an existing bytes value, the
+// data is copied and its content type comes along with it, unless a new one is given.
+func bytes(s: string, content_type?: string) -> bytes
+func bytes(b: bytes, content_type?: string) -> bytes
+
+// Base64-encode a string (its UTF-8 bytes) or the data of a bytes value. A bytes
+// value's content type is not part of its data, and is not encoded.
+func base64encode(s: string) -> string
+func base64encode(b: bytes) -> string
+
+// Decode a base64 string.
+//
+// Called with one argument it returns a *string*, which is what the HCL builtin of the
+// same name does — config written against that keeps working. Pass a content type and
+// it returns a `bytes` value instead, which is what you want for anything that is not
+// text. "" is a content type for this purpose: it asks for bytes without claiming a
+// type for them.
+func base64decode(s: string) -> string
+func base64decode(s: string, content_type: string) -> bytes

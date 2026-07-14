@@ -84,6 +84,26 @@ for name, fn := range bytescty.GetBytesFunctions() {
 | `base64decode(s)` | `(string) → string` | Decode base64 to string (backward compatible) |
 | `base64decode(s, ct)` | `(string, string) → bytes` | Decode base64 to bytes object with content type |
 
+`base64encode` and `base64decode` deliberately shadow the HCL builtins of the same name, *extending* them rather than replacing them: one-argument `base64decode` still returns a string, so config written against the builtin keeps working.
+
+## Signature declarations
+
+The table above is what these functions really accept. It is not what their cty metadata can say, and the gap is not small:
+
+- Each takes an argument that is a **union** — a string, or a bytes value. cty has no union type, so its metadata can only say `dynamic`.
+- `bytes` and `base64decode` each take **one optional trailing argument**. The only way cty offers to make an argument optional is to make it variadic, which erases its name, its type, and its arity.
+- `base64decode`'s **return type depends on whether that argument is present** — string with one argument, bytes with two — and a cty function has exactly one signature to say it in.
+
+So `externs.cty` declares the real signatures, as [functy](https://github.com/tsarna/functy) `//functy:extern` declarations. The file is never compiled and declares nothing callable; it exists so that `help()`, generated documentation, and editor tooling can show what the cty metadata cannot.
+
+`Externs()` returns it as opaque bytes — this package does not import functy and does not parse them:
+
+```go
+parser.RegisterExterns(bytescty.Externs(), bytescty.ExternsFilename)
+```
+
+A host that is not a functy host can ignore it entirely; the cty `Description` on every function and parameter is still populated.
+
 ## Examples
 
 ```hcl
