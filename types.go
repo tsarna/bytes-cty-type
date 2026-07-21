@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
+	"github.com/tsarna/go2cty2go"
 	richcty "github.com/tsarna/rich-cty-types"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -81,4 +82,20 @@ func (b *Bytes) ToString(_ context.Context) (string, error) {
 // Length implements richcty.Lengthable, returning the byte length.
 func (b *Bytes) Length(_ context.Context) (int64, error) {
 	return int64(len(b.Data)), nil
+}
+
+// ToCty implements go2cty2go.CtyMarshaler: a *Bytes flowing through
+// go2cty2go.AnyToCty becomes the rich bytes object (content_type surfaced as
+// an attribute, the capsule under _capsule) rather than being reflected over.
+func (b *Bytes) ToCty() (cty.Value, error) {
+	return BuildBytesObject(b.Data, b.ContentType), nil
+}
+
+// CtyToNativeValue implements go2cty2go.NativeMarshaler: when go2cty2go.CtyToAny
+// reaches a bytes capsule (bare or under an object's _capsule attribute), it
+// yields the raw byte slice rather than the *Bytes pointer. The content type
+// is dropped — []byte cannot carry it — which is the intended lossy native
+// form for serialization.
+func (b *Bytes) CtyToNativeValue(go2cty2go.CapsuleInfo) (any, error) {
+	return b.Data, nil
 }

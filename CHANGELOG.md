@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-21
+
+### Added
+
+- **`Bytes` implements the `go2cty2go` conversion interfaces**, so bytes values convert
+  correctly in both directions through `go2cty2go.AnyToCty` / `CtyToAny` instead of being
+  reflected over or unwrapped to a raw pointer:
+
+  - `ToCty()` — a `*Bytes` becomes the rich bytes object (`content_type` surfaced as an
+    attribute, the capsule under `_capsule`).
+  - `CtyToNativeValue()` — a bytes value (bare capsule or `_capsule` object) yields its raw
+    `[]byte`. The content type is dropped, since `[]byte` cannot carry it; that is the
+    intended native form for serialization.
+
+### Changed
+
+- Now depends on `github.com/tsarna/go2cty2go` v0.3.0 (for the `CapsuleInfo` type named in
+  `CtyToNativeValue`'s signature). Downstream users of this package therefore pull
+  `go2cty2go` transitively.
+
 ## [0.2.0] - 2026-07-14
 
 ### Added
