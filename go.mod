@@ -6,7 +6,7 @@ require (
 	github.com/stretchr/testify v1.12.1
 	github.com/tsarna/go2cty2go v0.3.1
 	github.com/tsarna/rich-cty-types v0.5.1
-	github.com/zclconf/go-cty v1.19.0
+	github.com/zclconf/go-cty v1.20.0
 )
 
 require (
