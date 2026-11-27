@@ -1,3 +1,4 @@
+// Deprecated: merged into github.com/tsarna/ctyx as github.com/tsarna/ctyx/bytescty.
 module github.com/tsarna/bytes-cty-type
 
 go 1.25.8
